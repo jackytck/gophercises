@@ -2,40 +2,82 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
+	"html/template"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
-	stories := parseStories("./gopher.json")
-	if _, ok := stories["intro"]; !ok {
-		panic("intro arc is not found!")
-	}
+	port := flag.Int("port", 3000, "The port to start the CYOA web application on")
+	file := flag.String("file", "gopher.json", "The JSON file with the CYOA story")
+	tpl := flag.String("template", "story.gohtml", "The template html")
+	flag.Parse()
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, stories["intro"])
-	})
+	stories := parseStories2(*file)
+	handler := constructHandler(stories, *tpl)
 
-	http.ListenAndServe(":3000", handler)
+	fmt.Printf("Starting the server on port: %d\n", *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), handler))
 }
 
-func parseStories(filePath string) map[string]story {
+func parseStories(filePath string) story {
 	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		panic(err)
 	}
-	stories := make(map[string]story)
+	var stories story
 	json.Unmarshal(data, &stories)
-
 	return stories
 }
 
-type story struct {
-	Title   string   `json:"title"`
-	Story   []string `json:"story"`
-	Options []struct {
-		Text string `json:"text"`
-		Arc  string `json:"arc"`
-	} `json:"options"`
+func parseStories2(filePath string) story {
+	f, err := os.Open(filePath)
+	if err != nil {
+		panic(err)
+	}
+	d := json.NewDecoder(f)
+	var stories story
+	if err := d.Decode(&stories); err != nil {
+		panic(err)
+	}
+	return stories
+}
+
+type story map[string]chapter
+
+type chapter struct {
+	Title      string   `json:"title"`
+	Paragraphs []string `json:"story"`
+	Options    []option `json:"options"`
+}
+
+type option struct {
+	Text    string `json:"text"`
+	Chapter string `json:"arc"`
+}
+
+func constructHandler(stories story, tplPath string) http.Handler {
+	if _, ok := stories["intro"]; !ok {
+		panic("intro arc is not found!")
+	}
+	tpl := template.Must(template.ParseFiles(tplPath))
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", renderStory(tpl, stories["intro"]))
+
+	for k, v := range stories {
+		mux.HandleFunc("/"+k, renderStory(tpl, v))
+	}
+
+	return mux
+}
+
+func renderStory(tp *template.Template, s chapter) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tp.Execute(w, s)
+	}
 }
