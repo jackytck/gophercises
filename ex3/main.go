@@ -18,7 +18,7 @@ func main() {
 	flag.Parse()
 
 	stories := parseStories2(*file)
-	handler := constructHandler(stories, *tpl)
+	handler := newHandler(stories, *tpl)
 
 	fmt.Printf("Starting the server on port: %d\n", *port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), handler))
@@ -60,7 +60,7 @@ type option struct {
 	Chapter string `json:"arc"`
 }
 
-func constructHandler(stories story, tplPath string) http.Handler {
+func newHandler(stories story, tplPath string) http.Handler {
 	if _, ok := stories["intro"]; !ok {
 		panic("intro arc is not found!")
 	}
