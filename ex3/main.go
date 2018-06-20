@@ -78,6 +78,10 @@ func constructHandler(stories story, tplPath string) http.Handler {
 
 func renderStory(tp *template.Template, s chapter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tp.Execute(w, s)
+		err := tp.Execute(w, s)
+		if err != nil {
+			log.Printf("%v", err)
+			http.Error(w, "Something went wrong...", http.StatusInternalServerError)
+		}
 	}
 }
