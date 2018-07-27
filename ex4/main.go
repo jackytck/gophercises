@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/jackytck/gophercises/ex4/link"
 )
 
 func main() {
@@ -15,7 +17,7 @@ func main() {
 		panic(err)
 	}
 
-	links, err := Parse(file)
+	links, err := link.Parse(file)
 	if err != nil {
 		panic(err)
 	}
