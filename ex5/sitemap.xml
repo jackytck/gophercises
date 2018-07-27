@@ -1,261 +1,306 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://www.golang.org</loc>
+    <loc>https://golang.org</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/</loc>
+    <loc>https://golang.org/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/</loc>
+    <loc>https://golang.org/doc/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/pkg/</loc>
+    <loc>https://golang.org/pkg/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/project/</loc>
+    <loc>https://golang.org/project/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/help/</loc>
+    <loc>https://golang.org/help/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/</loc>
+    <loc>https://golang.org/blog/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/dl/</loc>
+    <loc>https://golang.org/dl/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/LICENSE</loc>
+    <loc>https://golang.org/LICENSE</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/tos.html</loc>
+    <loc>https://golang.org/doc/tos.html</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/install</loc>
+    <loc>https://golang.org/doc/install</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/cmd/go/</loc>
+    <loc>https://golang.org/cmd/go/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/diagnostics.html</loc>
+    <loc>https://golang.org/doc/diagnostics.html</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/faq</loc>
+    <loc>https://golang.org/doc/faq</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/wiki</loc>
+    <loc>https://golang.org/wiki</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/wiki/Learn</loc>
+    <loc>https://golang.org/wiki/Learn</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/cmd</loc>
+    <loc>https://golang.org/doc/cmd</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/ref/spec</loc>
+    <loc>https://golang.org/ref/spec</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/ref/mem</loc>
+    <loc>https://golang.org/ref/mem</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/devel/release.html</loc>
+    <loc>https://golang.org/doc/devel/release.html</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/codewalk/functions</loc>
+    <loc>https://golang.org/doc/codewalk/functions</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/codewalk/markov</loc>
+    <loc>https://golang.org/doc/codewalk/markov</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/codewalk/sharemem</loc>
+    <loc>https://golang.org/doc/codewalk/sharemem</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/articles/wiki/</loc>
+    <loc>https://golang.org/doc/articles/wiki/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/json-rpc-tale-of-interfaces</loc>
+    <loc>https://golang.org/blog/json-rpc-tale-of-interfaces</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/gos-declaration-syntax</loc>
+    <loc>https://golang.org/blog/gos-declaration-syntax</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/defer-panic-and-recover</loc>
+    <loc>https://golang.org/blog/defer-panic-and-recover</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/go-concurrency-patterns-timing-out-and</loc>
+    <loc>https://golang.org/blog/go-concurrency-patterns-timing-out-and</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/go-slices-usage-and-internals</loc>
+    <loc>https://golang.org/blog/go-slices-usage-and-internals</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/gif-decoder-exercise-in-go-interfaces</loc>
+    <loc>https://golang.org/blog/gif-decoder-exercise-in-go-interfaces</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/error-handling-and-go</loc>
+    <loc>https://golang.org/blog/error-handling-and-go</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/organizing-go-code</loc>
+    <loc>https://golang.org/blog/organizing-go-code</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/json-and-go</loc>
+    <loc>https://golang.org/blog/json-and-go</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/pkg/encoding/json/</loc>
+    <loc>https://golang.org/pkg/encoding/json/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/gobs-of-data</loc>
+    <loc>https://golang.org/blog/gobs-of-data</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/pkg/encoding/gob/</loc>
+    <loc>https://golang.org/pkg/encoding/gob/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/laws-of-reflection</loc>
+    <loc>https://golang.org/blog/laws-of-reflection</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/pkg/reflect/</loc>
+    <loc>https://golang.org/pkg/reflect/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/go-image-package</loc>
+    <loc>https://golang.org/blog/go-image-package</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/pkg/image/</loc>
+    <loc>https://golang.org/pkg/image/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/go-imagedraw-package</loc>
+    <loc>https://golang.org/blog/go-imagedraw-package</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/pkg/image/draw/</loc>
+    <loc>https://golang.org/pkg/image/draw/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/articles/go_command.html</loc>
+    <loc>https://golang.org/doc/articles/go_command.html</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/gdb</loc>
+    <loc>https://golang.org/doc/gdb</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/articles/race_detector.html</loc>
+    <loc>https://golang.org/doc/articles/race_detector.html</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/asm</loc>
+    <loc>https://golang.org/doc/asm</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/c-go-cgo</loc>
+    <loc>https://golang.org/blog/c-go-cgo</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/cmd/cgo/</loc>
+    <loc>https://golang.org/cmd/cgo/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/godoc-documenting-go-code</loc>
+    <loc>https://golang.org/blog/godoc-documenting-go-code</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/cmd/godoc/</loc>
+    <loc>https://golang.org/cmd/godoc/</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/profiling-go-programs</loc>
+    <loc>https://golang.org/blog/profiling-go-programs</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/blog/race-detector</loc>
+    <loc>https://golang.org/blog/race-detector</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/wiki/Articles</loc>
+    <loc>https://golang.org/wiki/Articles</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/talks</loc>
+    <loc>https://golang.org/talks</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/wiki/GoTalks</loc>
+    <loc>https://golang.org/wiki/GoTalks</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/wiki/NonEnglish</loc>
+    <loc>https://golang.org/wiki/NonEnglish</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1compat</loc>
+    <loc>https://golang.org/doc/go1compat</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/cmd/go/#hdr-Download_and_install_packages_and_dependencies</loc>
+    <loc>https://golang.org/cmd/go/#hdr-Download_and_install_packages_and_dependencies</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/wiki/Projects</loc>
+    <loc>https://golang.org/wiki/Projects</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/CONTRIBUTORS</loc>
+    <loc>https://golang.org/CONTRIBUTORS</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1.10</loc>
+    <loc>https://golang.org/doc/go1.10</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1.9</loc>
+    <loc>https://golang.org/doc/go1.9</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1.8</loc>
+    <loc>https://golang.org/doc/go1.8</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1.7</loc>
+    <loc>https://golang.org/doc/go1.7</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1.6</loc>
+    <loc>https://golang.org/doc/go1.6</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1.5</loc>
+    <loc>https://golang.org/doc/go1.5</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1.4</loc>
+    <loc>https://golang.org/doc/go1.4</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1.3</loc>
+    <loc>https://golang.org/doc/go1.3</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1.2</loc>
+    <loc>https://golang.org/doc/go1.2</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1.1</loc>
+    <loc>https://golang.org/doc/go1.1</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go1</loc>
+    <loc>https://golang.org/doc/go1</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/security</loc>
+    <loc>https://golang.org/change</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/conduct</loc>
+    <loc>https://golang.org/security</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/contribute.html</loc>
+    <loc>https://golang.org/conduct</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/go_faq.html</loc>
+    <loc>https://golang.org/doc/contribute.html</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/wiki/GoUserGroups</loc>
+    <loc>https://golang.org/doc/go_faq.html</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/play</loc>
+    <loc>https://golang.org/wiki/GoUserGroups</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/index</loc>
+    <loc>https://golang.org/play</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/go-cloud</loc>
+    <loc>https://golang.org/index</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/ismmkeynote</loc>
+    <loc>https://golang.org/go-cloud</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/conduct-2018</loc>
+    <loc>https://golang.org/ismmkeynote</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/go-brand</loc>
+    <loc>https://golang.org/s/go15gcpacing</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/versioning-proposal</loc>
+    <loc>https://golang.org/conduct-2018</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/doc/install/source</loc>
+    <loc>https://golang.org/cl/37014</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/pkg</loc>
+    <loc>https://golang.org/conduct/#scope</loc>
   </url>
   <url>
-    <loc>https://www.golang.org/LICENSE?m=text</loc>
+    <loc>https://golang.org/conduct/#reporting</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/go-brand</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/s/presentation-theme</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/s/brandbook</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/s/logos</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/versioning-proposal</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/doc/go1compat.html</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/doc/faq#get_version</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/design/24301-versioned-go</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/x/vgo</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/issue/24301</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/issue/24301#issuecomment-371228742</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/issue/24301#issuecomment-371228664</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/doc/install/source</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/pkg</loc>
+  </url>
+  <url>
+    <loc>https://golang.org/LICENSE?m=text</loc>
   </url>
 </urlset>

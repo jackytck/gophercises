@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -18,10 +19,28 @@ func main() {
 	out := flag.String("out", "sitemap.xml", "Output filename")
 	flag.Parse()
 
-	urls := crawl(*domain, *depth)
+	base, err := getBaseURL(*domain)
+	if err != nil {
+		panic(err)
+	}
+
+	urls := crawl(base, *depth)
 	if err := generateXML(urls, *out); err != nil {
 		panic(err)
 	}
+}
+
+func getBaseURL(reqURL string) (string, error) {
+	r, err := http.Get(reqURL)
+	if err != nil {
+		return "", err
+	}
+	u := r.Request.URL
+	b := &url.URL{
+		Scheme: u.Scheme,
+		Host:   u.Host,
+	}
+	return b.String(), nil
 }
 
 func generateXML(urls urlset, out string) error {
@@ -43,10 +62,10 @@ func generateXML(urls urlset, out string) error {
 type urlset struct {
 	XMLName xml.Name `xml:"urlset"`
 	XMLns   string   `xml:"xmlns,attr"`
-	URLs    []url
+	URLs    []urlx
 }
 
-type url struct {
+type urlx struct {
 	XMLName xml.Name `xml:"url"`
 	Loc     string   `xml:"loc"`
 }
@@ -83,14 +102,16 @@ func crawl(domain string, depth int) urlset {
 		}
 		visited[l] = true
 		fmt.Println("Depth:", f.Depth, "Link", l)
-		crawled.URLs = append(crawled.URLs, url{
+		crawled.URLs = append(crawled.URLs, urlx{
 			Loc: l,
 		})
 
 		res, err := http.Get(l)
 		if err != nil {
+			res.Body.Close()
 			continue
 		}
+
 		links, _ := link.Parse(res.Body)
 		for _, c := range links {
 			if !isSameDomain(c, domain) {
@@ -109,6 +130,8 @@ func crawl(domain string, depth int) urlset {
 			}
 			q.Enqueue(n)
 		}
+
+		res.Body.Close()
 	}
 
 	return crawled
