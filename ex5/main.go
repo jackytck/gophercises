@@ -13,6 +13,8 @@ import (
 	lane "gopkg.in/oleiade/lane.v1"
 )
 
+const xmlns = "http://www.sitemaps.org/schemas/sitemap/0.9"
+
 func main() {
 	domain := flag.String("domain", "https://www.golang.org", "Root domain")
 	depth := flag.Int("depth", 1, "Depth of transversal")
@@ -49,7 +51,7 @@ func generateXML(urls urlset, out string) error {
 	if err != nil {
 		return err
 	}
-	urls.XMLns = "http://www.sitemaps.org/schemas/sitemap/0.9"
+	urls.XMLns = xmlns
 	f.Write([]byte(xml.Header))
 	enc := xml.NewEncoder(f)
 	enc.Indent("", "  ")
@@ -62,10 +64,10 @@ func generateXML(urls urlset, out string) error {
 type urlset struct {
 	XMLName xml.Name `xml:"urlset"`
 	XMLns   string   `xml:"xmlns,attr"`
-	URLs    []urlx
+	URLs    []loc
 }
 
-type urlx struct {
+type loc struct {
 	XMLName xml.Name `xml:"url"`
 	Loc     string   `xml:"loc"`
 }
@@ -102,7 +104,7 @@ func crawl(domain string, depth int) urlset {
 		}
 		visited[l] = true
 		fmt.Println("Depth:", f.Depth, "Link", l)
-		crawled.URLs = append(crawled.URLs, urlx{
+		crawled.URLs = append(crawled.URLs, loc{
 			Loc: l,
 		})
 
