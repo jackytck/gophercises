@@ -65,6 +65,14 @@ func AllTasks() ([]Task, error) {
 	return tasks, nil
 }
 
+// DeleteTask deletes task from the db.
+func DeleteTask(key int) error {
+	return db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(taskBucket)
+		return b.Delete(itob(key))
+	})
+}
+
 func itob(v int) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(v))
