@@ -34,21 +34,19 @@ func normalize(phone string) string {
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable",
 		host, port, user, password)
-	// db, err := sql.Open("postgres", psqlInfo)
-	// must(err)
-	// err = resetDB(db, dbname)
-	// must(err)
-	// db.Close()
+	db, err := sql.Open("postgres", psqlInfo)
+	must(err)
+	err = resetDB(db, dbname)
+	must(err)
+	db.Close()
 
 	psqlInfo = fmt.Sprintf("%s dbname=%s", psqlInfo, dbname)
-	db, err := sql.Open("postgres", psqlInfo)
+	db, err = sql.Open("postgres", psqlInfo)
 	must(err)
 	defer db.Close()
 
 	must(createPhoneNumbersTable(db))
-	id, err := insertPhone(db, "1234567890")
-	must(err)
-	fmt.Println("id=", id)
+	populateData(db)
 }
 
 func resetDB(db *sql.DB, name string) error {
@@ -65,6 +63,25 @@ func createDB(db *sql.DB, name string) error {
 		return err
 	}
 	return nil
+}
+
+func populateData(db *sql.DB) {
+	_, err := insertPhone(db, "1234567890")
+	must(err)
+	_, err = insertPhone(db, "123 456 7891")
+	must(err)
+	_, err = insertPhone(db, "(123) 456 7892")
+	must(err)
+	_, err = insertPhone(db, "(123) 456-7893")
+	must(err)
+	_, err = insertPhone(db, "123-456-7894")
+	must(err)
+	_, err = insertPhone(db, "123-456-7890")
+	must(err)
+	_, err = insertPhone(db, "1234567892")
+	must(err)
+	_, err = insertPhone(db, "(123)456-7892")
+	must(err)
 }
 
 func insertPhone(db *sql.DB, phone string) (int, error) {
