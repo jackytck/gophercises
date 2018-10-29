@@ -3,7 +3,9 @@ package deck
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
+	"time"
 )
 
 // Suit represents a suit.
@@ -49,6 +51,13 @@ type Card struct {
 	Rank
 }
 
+func (c Card) String() string {
+	if c.Suit == Joker {
+		return c.Suit.String()
+	}
+	return fmt.Sprintf("%s of %ss", c.Rank, c.Suit)
+}
+
 // New creates a deck of cards in sorted order.
 func New(opts ...func([]Card) []Card) []Card {
 	var cards []Card
@@ -92,9 +101,13 @@ func absRank(c Card) int {
 	return int(c.Suit)*int(maxRank) + int(c.Rank)
 }
 
-func (c Card) String() string {
-	if c.Suit == Joker {
-		return c.Suit.String()
+// Shuffle shuffles the cards.
+func Shuffle(cards []Card) []Card {
+	ret := make([]Card, len(cards))
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	perm := r.Perm(len(cards))
+	for i, v := range perm {
+		ret[i] = cards[v]
 	}
-	return fmt.Sprintf("%s of %ss", c.Rank, c.Suit)
+	return ret
 }
