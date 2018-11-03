@@ -137,3 +137,14 @@ func Filter(f func(Card) bool) func([]Card) []Card {
 		return ret
 	}
 }
+
+// Deck multiplies the given deck by n times.
+func Deck(n int) func([]Card) []Card {
+	return func(cards []Card) []Card {
+		var ret []Card
+		for i := 0; i < n; i++ {
+			ret = append(ret, cards...)
+		}
+		return ret
+	}
+}
