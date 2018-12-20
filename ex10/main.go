@@ -77,9 +77,31 @@ func main() {
 			player = append(player, card)
 		}
 	}
+
+	// if dealer score <= 16, then hit
+	// if dealer has a soft 17, then hit
+	for dealer.Score() <= 16 || (dealer.Score() == 17 && dealer.MinScore() != 17) {
+		fmt.Println("here?")
+		card, cards = draw(cards)
+		dealer = append(dealer, card)
+	}
+
+	dScore, pScore := dealer.Score(), player.Score()
 	fmt.Println("==FINAL HANDS==")
-	fmt.Println("Dealer:", dealer, "\nScore", dealer.Score())
-	fmt.Println("Player:", player, "\nScore", player.Score())
+	fmt.Println("Dealer:", dealer, "\nScore", dScore)
+	fmt.Println("Player:", player, "\nScore", pScore)
+	switch {
+	case pScore > 21:
+		fmt.Println("You busted")
+	case dScore > 21:
+		fmt.Println("Dealer busted")
+	case pScore > dScore:
+		fmt.Println("You win!")
+	case dScore > pScore:
+		fmt.Println("You lose!")
+	case dScore == pScore:
+		fmt.Println("Draw")
+	}
 }
 
 func draw(cards []deck.Card) (deck.Card, []deck.Card) {
