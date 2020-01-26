@@ -47,15 +47,19 @@ func New(opts Options) Game {
 // Game represents a game.
 type Game struct {
 	// unexported fields
-	deck            []deck.Card
 	nDecks          int
 	nHands          int
-	state           state
-	dealer          []deck.Card
-	player          []deck.Card
-	dealerAI        AI
-	balance         int
 	blackjackPayout float64
+
+	state state
+	deck  []deck.Card
+
+	dealer   []deck.Card
+	dealerAI AI
+
+	player    []deck.Card
+	playerBet int
+	balance   int
 }
 
 // CurrentHand return the address of the current player.
@@ -68,6 +72,11 @@ func (g *Game) currentHand() *[]deck.Card {
 	default:
 		panic("it isn't currently any player's turn")
 	}
+}
+
+func (g *Game) bet(ai AI, shuffled bool) {
+	bet := ai.Bet(shuffled)
+	g.playerBet = bet
 }
 
 func (g *Game) deal() {
@@ -89,10 +98,13 @@ func (g *Game) Play(ai AI) int {
 	min := 52 * g.nDecks / 3
 
 	for i := 0; i < g.nHands; i++ {
+		shuffled := false
 		if len(g.deck) < min {
 			g.deck = deck.New(deck.Deck(g.nDecks), deck.Shuffle)
+			shuffled = true
 		}
 
+		g.bet(ai, shuffled)
 		g.deal()
 
 		for g.state == statePlayerTurn {
@@ -117,22 +129,23 @@ func (g *Game) Play(ai AI) int {
 
 func endHand(g *Game, ai AI) {
 	dScore, pScore := Score(g.dealer...), Score(g.player...)
+	winnings := g.playerBet
 	switch {
 	case pScore > 21:
 		fmt.Println("You busted")
-		g.balance--
+		g.balance *= -1
 	case dScore > 21:
 		fmt.Println("Dealer busted")
-		g.balance++
 	case pScore > dScore:
 		fmt.Println("You win!")
-		g.balance++
 	case dScore > pScore:
 		fmt.Println("You lose!")
-		g.balance--
+		g.balance *= -1
 	case dScore == pScore:
 		fmt.Println("Draw")
+		winnings = 0
 	}
+	g.balance += winnings
 	fmt.Println()
 	ai.Results([][]deck.Card{g.player}, g.dealer)
 	g.dealer = nil
