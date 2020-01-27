@@ -89,6 +89,16 @@ func (g *Game) deal() {
 		card, g.deck = draw(g.deck)
 		g.player = append(g.player, card)
 	}
+	// test blackjack
+	// g.player = []deck.Card{
+	// 	{Rank: deck.Six},
+	// 	{Rank: deck.Five},
+	// 	{Rank: deck.Ten},
+	// }
+	// g.dealer = []deck.Card{
+	// 	{Rank: deck.Ace},
+	// 	{Rank: deck.Ten},
+	// }
 	g.state = statePlayerTurn
 }
 
@@ -106,6 +116,10 @@ func (g *Game) Play(ai AI) int {
 
 		g.bet(ai, shuffled)
 		g.deal()
+		if Blackjack(g.dealer...) {
+			endHand(g, ai)
+			continue
+		}
 
 		for g.state == statePlayerTurn {
 			hand := make([]deck.Card, len(g.player))
@@ -129,8 +143,18 @@ func (g *Game) Play(ai AI) int {
 
 func endHand(g *Game, ai AI) {
 	dScore, pScore := Score(g.dealer...), Score(g.player...)
+	dBlackjack, pBlackjack := Blackjack(g.dealer...), Blackjack(g.player...)
 	winnings := g.playerBet
 	switch {
+	case dBlackjack && pBlackjack:
+		fmt.Println("Both got blackjack")
+		winnings = 0
+	case dBlackjack:
+		fmt.Println("Dealer blackjack")
+		winnings *= -1
+	case pBlackjack:
+		fmt.Println("Player blackjack")
+		winnings = int(float64(winnings) * g.blackjackPayout)
 	case pScore > 21:
 		fmt.Println("You busted")
 		g.balance *= -1
@@ -142,7 +166,7 @@ func endHand(g *Game, ai AI) {
 		fmt.Println("You lose!")
 		g.balance *= -1
 	case dScore == pScore:
-		fmt.Println("Draw")
+		// fmt.Println("Draw")
 		winnings = 0
 	}
 	g.balance += winnings
@@ -205,6 +229,11 @@ func Soft(hand ...deck.Card) bool {
 	ms := minScore(hand...)
 	score := Score(hand...)
 	return ms != score
+}
+
+// Blackjack returns true if a hand is a blackjack.
+func Blackjack(hand ...deck.Card) bool {
+	return len(hand) == 2 && Score(hand...) == 21
 }
 
 func min(a, b int) int {
