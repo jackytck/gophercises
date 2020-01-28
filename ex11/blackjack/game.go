@@ -1,6 +1,7 @@
 package blackjack
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jackytck/gophercises/ex9/deck"
@@ -125,7 +126,15 @@ func (g *Game) Play(ai AI) int {
 			hand := make([]deck.Card, len(g.player))
 			copy(hand, g.player)
 			move := ai.Play(hand, g.dealer[0])
-			move(g)
+			err := move(g)
+			switch err {
+			case errBust:
+				MoveStand(g)
+			case nil:
+				// noop
+			default:
+				panic(err)
+			}
 		}
 
 		for g.state == stateDealerTurn {
@@ -176,23 +185,41 @@ func endHand(g *Game, ai AI) {
 	g.player = nil
 }
 
+var (
+	errBust = errors.New("hand score exceeded 21")
+)
+
 // Move is a move function.
-type Move func(*Game)
+type Move func(*Game) error
 
 // MoveHit is a hit function.
-func MoveHit(g *Game) {
+func MoveHit(g *Game) error {
 	hand := g.currentHand()
 	var card deck.Card
 	card, g.deck = draw(g.deck)
 	*hand = append(*hand, card)
 	if Score(*hand...) > 21 {
-		MoveStand(g)
+		return errBust
 	}
+	return nil
+}
+
+// MoveDouble doubles down aon a hand with 2 cards.
+func MoveDouble(g *Game) error {
+	if len(g.player) != 2 {
+		return errors.New("can only double on a hand with 2 cards")
+	}
+	g.playerBet *= 2
+	if err := MoveHit(g); err != nil {
+		return err
+	}
+	return MoveStand(g)
 }
 
 // MoveStand is a stand function.
-func MoveStand(g *Game) {
+func MoveStand(g *Game) error {
 	g.state++
+	return nil
 }
 
 func draw(cards []deck.Card) (deck.Card, []deck.Card) {
