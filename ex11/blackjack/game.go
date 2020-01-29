@@ -75,6 +75,11 @@ func (g *Game) currentHand() *[]deck.Card {
 	}
 }
 
+type hand struct {
+	cards []deck.Card
+	bet   int
+}
+
 func (g *Game) bet(ai AI, shuffled bool) {
 	bet := ai.Bet(shuffled)
 	g.playerBet = bet
