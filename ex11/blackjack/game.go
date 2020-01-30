@@ -58,7 +58,8 @@ type Game struct {
 	dealer   []deck.Card
 	dealerAI AI
 
-	player    []deck.Card
+	player    []hand
+	handIdx   int
 	playerBet int
 	balance   int
 }
@@ -69,7 +70,7 @@ func (g *Game) currentHand() *[]deck.Card {
 	case stateDealerTurn:
 		return &g.dealer
 	case statePlayerTurn:
-		return &g.player
+		return &g.player[g.handIdx].cards
 	default:
 		panic("it isn't currently any player's turn")
 	}
@@ -86,14 +87,25 @@ func (g *Game) bet(ai AI, shuffled bool) {
 }
 
 func (g *Game) deal() {
+	playerHand := make([]deck.Card, 0, 5)
 	g.dealer = make([]deck.Card, 0, 5)
-	g.player = make([]deck.Card, 0, 5)
+	// g.player = make([]hand, 0, 5)
 	var card deck.Card
 	for i := 0; i < 2; i++ {
 		card, g.deck = draw(g.deck)
 		g.dealer = append(g.dealer, card)
 		card, g.deck = draw(g.deck)
-		g.player = append(g.player, card)
+		playerHand = append(playerHand, card)
+	}
+	playerHand = []deck.Card{
+		{Rank: deck.Seven},
+		{Rank: deck.Seven},
+	}
+	g.player = []hand{
+		{
+			cards: playerHand,
+			bet:   g.playerBet,
+		},
 	}
 	// test blackjack
 	// g.player = []deck.Card{
@@ -123,13 +135,13 @@ func (g *Game) Play(ai AI) int {
 		g.bet(ai, shuffled)
 		g.deal()
 		if Blackjack(g.dealer...) {
-			endHand(g, ai)
+			endRound(g, ai)
 			continue
 		}
 
 		for g.state == statePlayerTurn {
-			hand := make([]deck.Card, len(g.player))
-			copy(hand, g.player)
+			hand := make([]deck.Card, len(*g.currentHand()))
+			copy(hand, *g.currentHand())
 			move := ai.Play(hand, g.dealer[0])
 			err := move(g)
 			switch err {
@@ -149,45 +161,51 @@ func (g *Game) Play(ai AI) int {
 			move(g)
 		}
 
-		endHand(g, ai)
+		endRound(g, ai)
 	}
 
 	return g.balance
 }
 
-func endHand(g *Game, ai AI) {
-	dScore, pScore := Score(g.dealer...), Score(g.player...)
-	dBlackjack, pBlackjack := Blackjack(g.dealer...), Blackjack(g.player...)
-	winnings := g.playerBet
-	switch {
-	case dBlackjack && pBlackjack:
-		fmt.Println("Both got blackjack")
-		winnings = 0
-	case dBlackjack:
-		fmt.Println("Dealer blackjack")
-		winnings *= -1
-	case pBlackjack:
-		fmt.Println("Player blackjack")
-		winnings = int(float64(winnings) * g.blackjackPayout)
-	case pScore > 21:
-		fmt.Println("You busted")
-		g.balance *= -1
-	case dScore > 21:
-		fmt.Println("Dealer busted")
-	case pScore > dScore:
-		fmt.Println("You win!")
-	case dScore > pScore:
-		fmt.Println("You lose!")
-		g.balance *= -1
-	case dScore == pScore:
-		// fmt.Println("Draw")
-		winnings = 0
+func endRound(g *Game, ai AI) {
+	dScore := Score(g.dealer...)
+	dBlackjack := Blackjack(g.dealer...)
+	allHands := make([][]deck.Card, len(g.player))
+	for hi, hand := range g.player {
+		allHands[hi] = hand.cards
+		pScore, pBlackjack := Score(allHands[hi]...), Blackjack(allHands[hi]...)
+		winnings := hand.bet
+		switch {
+		case dBlackjack && pBlackjack:
+			fmt.Println("Both got blackjack")
+			winnings = 0
+		case dBlackjack:
+			fmt.Println("Dealer blackjack")
+			winnings *= -1
+		case pBlackjack:
+			fmt.Println("Player blackjack")
+			winnings = int(float64(winnings) * g.blackjackPayout)
+		case pScore > 21:
+			fmt.Println("You busted")
+			g.balance *= -1
+		case dScore > 21:
+			fmt.Println("Dealer busted")
+		case pScore > dScore:
+			fmt.Println("You win!")
+		case dScore > pScore:
+			fmt.Println("You lose!")
+			g.balance *= -1
+		case dScore == pScore:
+			// fmt.Println("Draw")
+			winnings = 0
+		}
+		g.balance += winnings
 	}
-	g.balance += winnings
 	fmt.Println()
-	ai.Results([][]deck.Card{g.player}, g.dealer)
+	ai.Results(allHands, g.dealer)
 	g.dealer = nil
 	g.player = nil
+	g.handIdx = 0
 }
 
 var (
@@ -209,6 +227,23 @@ func MoveHit(g *Game) error {
 	return nil
 }
 
+// MoveSplit splits two cards with the same rank.
+func MoveSplit(g *Game) error {
+	h := *g.currentHand()
+	if len(h) != 2 {
+		return errors.New("you can only split with two cards in your hand")
+	}
+	if h[0].Rank != h[1].Rank {
+		return errors.New("both cards must have the same rank to split")
+	}
+	b := g.player[g.handIdx].bet
+	g.player = []hand{
+		{cards: []deck.Card{h[0]}, bet: b},
+		{cards: []deck.Card{h[1]}, bet: b},
+	}
+	return nil
+}
+
 // MoveDouble doubles down aon a hand with 2 cards.
 func MoveDouble(g *Game) error {
 	if len(g.player) != 2 {
@@ -223,8 +258,18 @@ func MoveDouble(g *Game) error {
 
 // MoveStand is a stand function.
 func MoveStand(g *Game) error {
-	g.state++
-	return nil
+	if g.state == stateDealerTurn {
+		g.state++
+		return nil
+	}
+	if g.state == statePlayerTurn {
+		g.handIdx++
+		if g.handIdx >= len(g.player) {
+			g.state++
+		}
+		return nil
+	}
+	return errors.New("invalid state")
 }
 
 func draw(cards []deck.Card) (deck.Card, []deck.Card) {
