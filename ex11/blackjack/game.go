@@ -14,6 +14,7 @@ type Options struct {
 	Decks           int
 	Hands           int
 	BlackjackPayout float64
+	Verbose         bool
 }
 
 const (
@@ -42,6 +43,7 @@ func New(opts Options) Game {
 	g.nDecks = opts.Decks
 	g.nHands = opts.Hands
 	g.blackjackPayout = opts.BlackjackPayout
+	g.verbose = opts.Verbose
 	return g
 }
 
@@ -62,9 +64,18 @@ type Game struct {
 	handIdx   int
 	playerBet int
 	balance   int
+
+	verbose bool
 }
 
-// CurrentHand return the address of the current player.
+// log logs a string if verbose is set.
+func (g *Game) log(s string) {
+	if g.verbose {
+		fmt.Println(s)
+	}
+}
+
+// currentHand return the address of the current player.
 func (g *Game) currentHand() *[]deck.Card {
 	switch g.state {
 	case stateDealerTurn:
@@ -182,31 +193,31 @@ func endRound(g *Game, ai AI) {
 		winnings := hand.bet
 		switch {
 		case dBlackjack && pBlackjack:
-			fmt.Println("Both got blackjack")
+			g.log("Both got blackjack")
 			winnings = 0
 		case dBlackjack:
-			fmt.Println("Dealer blackjack")
+			g.log("Dealer blackjack")
 			winnings *= -1
 		case pBlackjack:
-			fmt.Println("Player blackjack")
+			g.log("Player blackjack")
 			winnings = int(float64(winnings) * g.blackjackPayout)
 		case pScore > 21:
-			fmt.Println("You busted")
+			g.log("You busted")
 			g.balance *= -1
 		case dScore > 21:
-			fmt.Println("Dealer busted")
+			g.log("Dealer busted")
 		case pScore > dScore:
-			fmt.Println("You win!")
+			g.log("You win!")
 		case dScore > pScore:
-			fmt.Println("You lose!")
+			g.log("You lose!")
 			g.balance *= -1
 		case dScore == pScore:
-			// fmt.Println("Draw")
+			// g.log("Draw")
 			winnings = 0
 		}
 		g.balance += winnings
 	}
-	fmt.Println()
+	g.log("")
 	ai.Results(allHands, g.dealer)
 	g.dealer = nil
 	g.player = nil
