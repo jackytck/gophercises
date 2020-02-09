@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+var re = regexp.MustCompile("^(.+?) ([0-9]{4}) [(]([0-9]+) of ([0-9]+)[)][.](.+?)$")
+var replaceString = "$2 - $1 - $3 of $4.$5"
 
 func main() {
 	var dry bool
@@ -16,6 +20,7 @@ func main() {
 
 	walkDir := "./sample"
 	toRename := make(map[string][]file)
+	var toRenameRe []string
 
 	filepath.Walk(walkDir, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
@@ -29,6 +34,8 @@ func main() {
 				path: path,
 			})
 		}
+
+		toRenameRe = append(toRenameRe, path)
 		return nil
 	})
 
@@ -46,6 +53,13 @@ func main() {
 					fmt.Println("Error renaming:", origPath, err.Error())
 				}
 			}
+		}
+	}
+
+	for _, f := range toRenameRe {
+		oldName := filepath.Base(f)
+		if newName, err := matchRe(oldName); err == nil {
+			fmt.Println(oldName, "=>", newName)
 		}
 	}
 }
@@ -81,4 +95,11 @@ func match(filename string) (*matchResult, error) {
 		ext:   ext,
 	}
 	return &res, nil
+}
+
+func matchRe(filename string) (string, error) {
+	if !re.MatchString(filename) {
+		return "", fmt.Errorf("%s didn't match our pattern", filename)
+	}
+	return re.ReplaceAllString(filename, replaceString), nil
 }
