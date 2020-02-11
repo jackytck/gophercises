@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -8,9 +9,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/gophercises/quiet_hn/hn"
+	"github.com/jackytck/gophercises/ex13/hn"
 )
 
 func main() {
@@ -31,25 +33,9 @@ func main() {
 func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		var client hn.Client
-		ids, err := client.TopItems()
+		stories, err := getTopStories(numStories)
 		if err != nil {
-			http.Error(w, "Failed to load top stories", http.StatusInternalServerError)
-			return
-		}
-		var stories []item
-		for _, id := range ids {
-			hnItem, err := client.GetItem(id)
-			if err != nil {
-				continue
-			}
-			item := parseHNItem(hnItem)
-			if isStoryLink(item) {
-				stories = append(stories, item)
-				if len(stories) >= numStories {
-					break
-				}
-			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		data := templateData{
 			Stories: stories,
@@ -61,6 +47,53 @@ func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 			return
 		}
 	})
+}
+
+func getTopStories(numStories int) ([]item, error) {
+	var client hn.Client
+	ids, err := client.TopItems()
+	if err != nil {
+		return nil, errors.New("Failed to load top stories")
+	}
+	var stories []item
+
+	type result struct {
+		item item
+		err  error
+	}
+
+	resultCh := make(chan result)
+	var wg sync.WaitGroup
+	wg.Add(len(ids))
+	go func() {
+		wg.Wait()
+		close(resultCh)
+	}()
+
+	for _, id := range ids {
+		go func(id int) {
+			hnItem, err := client.GetItem(id)
+			if err != nil {
+				resultCh <- result{err: err}
+				return
+			}
+			it := parseHNItem(hnItem)
+			resultCh <- result{item: it}
+			wg.Done()
+		}(id)
+	}
+
+	for r := range resultCh {
+		it := r.item
+		if isStoryLink(it) {
+			stories = append(stories, it)
+			if len(stories) >= numStories {
+				break
+			}
+		}
+	}
+
+	return stories, nil
 }
 
 func isStoryLink(item item) bool {
