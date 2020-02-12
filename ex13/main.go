@@ -8,8 +8,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/jackytck/gophercises/ex13/hn"
@@ -55,41 +55,42 @@ func getTopStories(numStories int) ([]item, error) {
 	if err != nil {
 		return nil, errors.New("Failed to load top stories")
 	}
-	var stories []item
 
 	type result struct {
+		idx  int
 		item item
 		err  error
 	}
 
 	resultCh := make(chan result)
-	var wg sync.WaitGroup
-	wg.Add(len(ids))
-	go func() {
-		wg.Wait()
-		close(resultCh)
-	}()
 
-	for _, id := range ids {
-		go func(id int) {
+	for i := 0; i < numStories; i++ {
+		go func(idx, id int) {
 			hnItem, err := client.GetItem(id)
 			if err != nil {
-				resultCh <- result{err: err}
+				resultCh <- result{idx: idx, err: err}
 				return
 			}
 			it := parseHNItem(hnItem)
-			resultCh <- result{item: it}
-			wg.Done()
-		}(id)
+			resultCh <- result{idx: idx, item: it}
+		}(i, ids[i])
 	}
 
-	for r := range resultCh {
-		it := r.item
-		if isStoryLink(it) {
-			stories = append(stories, it)
-			if len(stories) >= numStories {
-				break
-			}
+	var results []result
+	for i := 0; i < numStories; i++ {
+		results = append(results, <-resultCh)
+	}
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].idx < results[j].idx
+	})
+
+	var stories []item
+	for _, res := range results {
+		if res.err != nil {
+			continue
+		}
+		if isStoryLink(res.item) {
+			stories = append(stories, res.item)
 		}
 	}
 
