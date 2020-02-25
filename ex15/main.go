@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -9,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"runtime/debug"
+
+	"github.com/alecthomas/chroma/quick"
 )
 
 func main() {
@@ -26,7 +29,13 @@ func sourceCodeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	io.Copy(w, file)
+	b := bytes.NewBuffer(nil)
+	_, err = io.Copy(b, file)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	quick.Highlight(w, b.String(), "go", "html", "github")
 }
 
 func recoverMx(app http.Handler, dev bool) http.HandlerFunc {
