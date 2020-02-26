@@ -8,8 +8,10 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime/debug"
+	"strings"
 
 	"github.com/alecthomas/chroma/quick"
 )
@@ -47,7 +49,7 @@ func recoverMx(app http.Handler, dev bool) http.HandlerFunc {
 				log.Println(string(stack))
 				w.WriteHeader(http.StatusInternalServerError)
 				if dev {
-					fmt.Fprintf(w, "<h1>panic: %s</h1><pre>%s</pre>", err, string(stack))
+					fmt.Fprintf(w, "<h1>panic: %s</h1><pre>%s</pre>", err, makeLinks(string(stack)))
 				} else {
 					http.Error(w, "Something went wrong :(", http.StatusInternalServerError)
 				}
@@ -125,4 +127,27 @@ func funcThatPanics() {
 
 func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "<h1>Hello!</h1>")
+}
+
+func makeLinks(stack string) string {
+	log.Println(stack)
+	lines := strings.Split(stack, "\n")
+	for li, line := range lines {
+		if line == "" || line[0] != '\t' {
+			continue
+		}
+		file := ""
+		for i, ch := range line {
+			if ch == ':' {
+				file = line[1:i]
+				break
+			}
+		}
+
+		v := url.Values{}
+		v.Set("path", file)
+		withURL := fmt.Sprintf("\t<a href=\"/debug/?%s\">%s</a>%s\"", v.Encode(), file, line[len(file)+1:])
+		lines[li] = withURL
+	}
+	return strings.Join(lines, "\n")
 }
