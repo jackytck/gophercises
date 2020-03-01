@@ -11,9 +11,12 @@ import (
 	"net/url"
 	"os"
 	"runtime/debug"
+	"strconv"
 	"strings"
 
-	"github.com/alecthomas/chroma/quick"
+	"github.com/alecthomas/chroma/formatters/html"
+	"github.com/alecthomas/chroma/lexers"
+	"github.com/alecthomas/chroma/styles"
 )
 
 func main() {
@@ -27,6 +30,11 @@ func main() {
 
 func sourceCodeHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.FormValue("path")
+	lineStr := r.FormValue("line")
+	line, err := strconv.Atoi(lineStr)
+	if err != nil {
+		line = -1
+	}
 	file, err := os.Open(path)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -37,7 +45,26 @@ func sourceCodeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	quick.Highlight(w, b.String(), "go", "html", "github")
+	var lines [][2]int
+	if line > 0 {
+		lines = append(lines, [2]int{line, line})
+	}
+	style := styles.Get("github")
+	if style == nil {
+		style = styles.Fallback
+	}
+	lexer := lexers.Get("go")
+	iterator, err := lexer.Tokenise(nil, b.String())
+	formatter := html.New(
+		html.TabWidth(2),
+		html.WithLineNumbers(true),
+		html.LineNumbersInTable(true),
+		html.LinkableLineNumbers(true, ""),
+		html.HighlightLines(lines),
+	)
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprint(w, "<style>pre {font-size: 1.1em;}</style>")
+	formatter.Format(w, style, iterator)
 }
 
 func recoverMx(app http.Handler, dev bool) http.HandlerFunc {
@@ -75,7 +102,9 @@ type responseWriter struct {
 }
 
 func (rw *responseWriter) Write(b []byte) (int, error) {
-	rw.writes = append(rw.writes, b)
+	c := make([]byte, len(b))
+	copy(c, b)
+	rw.writes = append(rw.writes, c)
 	return len(b), nil
 }
 
@@ -157,7 +186,7 @@ func makeLinks(stack string) string {
 		v := url.Values{}
 		v.Set("path", file)
 		v.Set("line", lineNum)
-		withURL := fmt.Sprintf("\t<a href=\"/debug/?%s\">%s:%s</a>%s\"", v.Encode(), file, lineNum, line[len(file)+2+len(lineNum):])
+		withURL := fmt.Sprintf("\t<a href=\"/debug/?%s#%s\">%s:%s</a>%s\"", v.Encode(), lineNum, file, lineNum, line[len(file)+2+len(lineNum):])
 		lines[li] = withURL
 	}
 	return strings.Join(lines, "\n")
