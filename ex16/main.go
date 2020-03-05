@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strings"
+
+	"golang.org/x/oauth2"
 )
 
 func main() {
@@ -21,7 +23,7 @@ func main() {
 	defer f.Close()
 	dec := json.NewDecoder(f)
 	dec.Decode(&creds)
-	fmt.Printf("%+v\n", creds)
+	// fmt.Printf("%+v\n", creds)
 
 	req, err := http.NewRequest("POST", "https://api.twitter.com/oauth2/token", strings.NewReader("grant_type=client_credentials"))
 	if err != nil {
@@ -36,5 +38,21 @@ func main() {
 		panic(err)
 	}
 	defer res.Body.Close()
-	io.Copy(os.Stdout, res.Body)
+
+	var token oauth2.Token
+	dec = json.NewDecoder(res.Body)
+	err = dec.Decode(&token)
+	if err != nil {
+		panic(err)
+	}
+	// fmt.Printf("%+v\n", token)
+
+	var conf oauth2.Config
+	tclient := conf.Client(context.Background(), &token)
+	res2, err := tclient.Get("https://api.twitter.com/1.1/statuses/retweets/1235185319257006080.json")
+	if err != nil {
+		panic(err)
+	}
+	defer res2.Body.Close()
+	io.Copy(os.Stdout, res2.Body)
 }
