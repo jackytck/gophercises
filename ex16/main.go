@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,24 +14,25 @@ import (
 )
 
 func main() {
-	var creds struct {
-		Key    string `json:"api_key"`
-		Secret string `json:"api_secret"`
-	}
-	f, err := os.Open(".keys.json")
+	var (
+		keyFile   string
+		usersFile string
+		tweetID   string
+	)
+	flag.StringVar(&keyFile, "key", ".keys.json", "The file where you store your key and secrets.")
+	flag.StringVar(&usersFile, "users", "users.csv", "The file where users who have retweeted the tweet are stored. This will be created if it does not exists.")
+	flag.StringVar(&tweetID, "tweet", "", "The ID of the tweet you wish to find retweeters of.")
+	flag.Parse()
+
+	key, secret, err := keys(keyFile)
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
-	dec := json.NewDecoder(f)
-	dec.Decode(&creds)
-	// fmt.Printf("%+v\n", creds)
-
 	req, err := http.NewRequest("POST", "https://api.twitter.com/oauth2/token", strings.NewReader("grant_type=client_credentials"))
 	if err != nil {
 		panic(err)
 	}
-	req.SetBasicAuth(creds.Key, creds.Secret)
+	req.SetBasicAuth(key, secret)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
 
 	var client http.Client
@@ -41,7 +43,7 @@ func main() {
 	defer res.Body.Close()
 
 	var token oauth2.Token
-	dec = json.NewDecoder(res.Body)
+	dec := json.NewDecoder(res.Body)
 	err = dec.Decode(&token)
 	if err != nil {
 		panic(err)
@@ -56,6 +58,23 @@ func main() {
 		panic(err)
 	}
 	log.Println(usernames)
+}
+
+func keys(keyFile string) (key, secret string, err error) {
+	var creds struct {
+		Key    string `json:"api_key"`
+		Secret string `json:"api_secret"`
+	}
+	f, err := os.Open(keyFile)
+	if err != nil {
+		return "", "", err
+	}
+	defer f.Close()
+	dec := json.NewDecoder(f)
+	dec.Decode(&creds)
+	// fmt.Printf("%+v\n", creds)
+
+	return creds.Key, creds.Secret, nil
 }
 
 func retweeters(client *http.Client, tweetID string) ([]string, error) {
