@@ -1,35 +1,33 @@
 package main
 
 import (
-	"fmt"
-	"os/exec"
-	"strconv"
+	"io"
+	"os"
+
+	"github.com/jackytck/gophercises/ex18/primitive"
 )
 
 func main() {
-	out, err := primitive("008.jpg", "out.jpg", 80, ellipse)
+	inFile, err := os.Open("008.jpg")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(out))
-}
-
-type PrimitiveMode int
-
-const (
-	combo PrimitiveMode = iota
-	triangle
-	rect
-	ellipse
-	circle
-	rotatedrect
-	beizers
-	rotatedellipse
-	polygon
-)
-
-func primitive(inputFile, outputFile string, numShapes int, mode PrimitiveMode) (string, error) {
-	cmd := exec.Command("primitive", "-i", inputFile, "-o", outputFile, "-n", strconv.Itoa(numShapes), "-m", strconv.Itoa(int(mode)))
-	b, err := cmd.CombinedOutput()
-	return string(b), err
+	defer inFile.Close()
+	out, err := primitive.Transform(inFile, 50)
+	if err != nil {
+		panic(err)
+	}
+	err = os.Remove("out.jpg")
+	if err != nil {
+		panic(err)
+	}
+	outFile, err := os.Create("out.jpg")
+	if err != nil {
+		panic(err)
+	}
+	defer outFile.Close()
+	_, err = io.Copy(outFile, out)
+	if err != nil {
+		panic(err)
+	}
 }
