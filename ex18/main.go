@@ -29,15 +29,22 @@ func main() {
 			return
 		}
 		defer file.Close()
-		// @TODO
-		ext := filepath.Ext(header.Filename)
-		_ = ext
-		out, err := primitive.Transform(file, 50)
+		ext := filepath.Ext(header.Filename)[1:]
+		out, err := primitive.Transform(file, ext, 50)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "image/jpg")
+		switch ext {
+		case "jpg":
+			fallthrough
+		case "jpeg":
+			w.Header().Set("Content-Type", "image/jpeg")
+		case "png":
+			w.Header().Set("Content-Type", "image/png")
+		default:
+			http.Error(w, fmt.Sprintf("invalid image type %s", ext), http.StatusBadRequest)
+		}
 		io.Copy(w, out)
 	})
 	port := "3000"
