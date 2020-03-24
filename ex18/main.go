@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/jackytck/gophercises/ex18/primitive"
@@ -22,6 +25,8 @@ func main() {
 		`
 		fmt.Fprint(w, html)
 	})
+
+	// handle image upload
 	mux.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {
 		file, header, err := r.FormFile("image")
 		if err != nil {
@@ -35,19 +40,35 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		switch ext {
-		case "jpg":
-			fallthrough
-		case "jpeg":
-			w.Header().Set("Content-Type", "image/jpeg")
-		case "png":
-			w.Header().Set("Content-Type", "image/png")
-		default:
-			http.Error(w, fmt.Sprintf("invalid image type %s", ext), http.StatusBadRequest)
+
+		// save image file to /img
+		outFile, err := tempfile("", ext)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		io.Copy(w, out)
+		defer outFile.Close()
+		io.Copy(outFile, out)
+		redirURL := fmt.Sprintf("/%s", outFile.Name())
+		http.Redirect(w, r, redirURL, http.StatusFound)
 	})
+
+	// static image server
+	fs := http.FileServer(http.Dir("./img"))
+	mux.Handle("/img/", http.StripPrefix("/img/", fs))
+
 	port := "3000"
 	log.Printf("Listening at http://127.0.0.1:%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))
+}
+
+func tempfile(prefix, ext string) (*os.File, error) {
+	f, err := ioutil.TempFile("./img/", prefix)
+	if err != nil {
+		return nil, errors.New("main: failed to create temporary file")
+	}
+	defer f.Close()
+	defer os.Remove(f.Name())
+	return os.Create(fmt.Sprintf("%s.%s", f.Name(), ext))
+
 }
