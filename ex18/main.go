@@ -35,7 +35,7 @@ func main() {
 		}
 		defer file.Close()
 		ext := filepath.Ext(header.Filename)[1:]
-		out, err := primitive.Transform(file, ext, 50)
+		out, err := primitive.Transform(file, ext, 50, primitive.WithMode(primitive.ModeBeizers))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

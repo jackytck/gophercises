@@ -37,7 +37,11 @@ func WithMode(mode Mode) func() []string {
 
 // Transform will take the provided image and apply a primitive
 // transformation to it, then return a reader to the resulting image.
-func Transform(image io.Reader, ext string, numShapes int, opts ...func()) (io.Reader, error) {
+func Transform(image io.Reader, ext string, numShapes int, opts ...func() []string) (io.Reader, error) {
+	var args []string
+	for _, opt := range opts {
+		args = append(args, opt()...)
+	}
 	in, err := tempfile("in_", ext)
 	if err != nil {
 		return nil, err
@@ -59,7 +63,7 @@ func Transform(image io.Reader, ext string, numShapes int, opts ...func()) (io.R
 	}
 
 	// run primitive w/ -i in.Name() -o out.Name()
-	stdCombo, err := run(in.Name(), out.Name(), numShapes, ModeEllipse)
+	stdCombo, err := run(in.Name(), out.Name(), numShapes, args...)
 	if err != nil {
 		return nil, fmt.Errorf("primitive: failed to run the primitive command. stdcombo=%s", stdCombo)
 	}
@@ -74,8 +78,10 @@ func Transform(image io.Reader, ext string, numShapes int, opts ...func()) (io.R
 	return b, nil
 }
 
-func run(inputFile, outputFile string, numShapes int, mode Mode) (string, error) {
-	cmd := exec.Command("primitive", "-i", inputFile, "-o", outputFile, "-n", strconv.Itoa(numShapes), "-m", strconv.Itoa(int(mode)))
+func run(inputFile, outputFile string, numShapes int, args ...string) (string, error) {
+	a := []string{"-i", inputFile, "-o", outputFile, "-n", strconv.Itoa(numShapes)}
+	args = append(a, args...)
+	cmd := exec.Command("primitive", args...)
 	b, err := cmd.CombinedOutput()
 	return string(b), err
 }
