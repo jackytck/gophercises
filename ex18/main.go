@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -35,22 +36,37 @@ func main() {
 		}
 		defer file.Close()
 		ext := filepath.Ext(header.Filename)[1:]
-		out, err := primitive.Transform(file, ext, 50, primitive.WithMode(primitive.ModeBeizers))
+		a, err := genImage(file, ext, 50, primitive.ModeCircle)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		file.Seek(0, 0)
+		b, err := genImage(file, ext, 50, primitive.ModeTriangle)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		file.Seek(0, 0)
+		c, err := genImage(file, ext, 50, primitive.ModePolygon)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		file.Seek(0, 0)
+		d, err := genImage(file, ext, 50, primitive.ModeCombo)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// save image file to /img
-		outFile, err := tempfile("", ext)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer outFile.Close()
-		io.Copy(outFile, out)
-		redirURL := fmt.Sprintf("/%s", outFile.Name())
-		http.Redirect(w, r, redirURL, http.StatusFound)
+		html := `<html><body>
+			{{range .}}
+				<img src="/{{.}}" />
+			{{end}}
+		</body><html>`
+		tpl := template.Must(template.New("").Parse(html))
+		tpl.Execute(w, []string{a, b, c, d})
 	})
 
 	// static image server
@@ -60,6 +76,21 @@ func main() {
 	port := "3000"
 	log.Printf("Listening at http://127.0.0.1:%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))
+}
+
+func genImage(r io.Reader, ext string, numShapes int, mode primitive.Mode) (string, error) {
+	out, err := primitive.Transform(r, ext, numShapes, primitive.WithMode(mode))
+	if err != nil {
+		return "", err
+	}
+	// save image file to /img
+	outFile, err := tempfile("", ext)
+	if err != nil {
+		return "", err
+	}
+	defer outFile.Close()
+	io.Copy(outFile, out)
+	return outFile.Name(), nil
 }
 
 func tempfile(prefix, ext string) (*os.File, error) {
