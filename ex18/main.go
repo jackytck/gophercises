@@ -3,13 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/jackytck/gophercises/ex18/primitive"
 )
@@ -36,37 +36,43 @@ func main() {
 		}
 		defer file.Close()
 		ext := filepath.Ext(header.Filename)[1:]
-		a, err := genImage(file, ext, 50, primitive.ModeCircle)
+		onDisk, err := tempfile("", ext)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 			return
 		}
-		file.Seek(0, 0)
-		b, err := genImage(file, ext, 50, primitive.ModeTriangle)
+		defer onDisk.Close()
+		_, err = io.Copy(onDisk, file)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 			return
 		}
-		file.Seek(0, 0)
-		c, err := genImage(file, ext, 50, primitive.ModePolygon)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		file.Seek(0, 0)
-		d, err := genImage(file, ext, 50, primitive.ModeCombo)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		http.Redirect(w, r, "/modify/"+filepath.Base(onDisk.Name()), http.StatusFound)
+	})
 
-		html := `<html><body>
-			{{range .}}
-				<img src="/{{.}}" />
-			{{end}}
-		</body><html>`
-		tpl := template.Must(template.New("").Parse(html))
-		tpl.Execute(w, []string{a, b, c, d})
+	mux.HandleFunc("/modify/", func(w http.ResponseWriter, r *http.Request) {
+		f, err := os.Open("./img/" + filepath.Base(r.URL.Path))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		modeStr := r.FormValue("mode")
+		if modeStr == "" {
+			// render mode choices
+			return
+		}
+		mode, err := strconv.Atoi(modeStr)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		_ = f
+		_ = mode
+		// render num shapes choices
+
+		// ext := filepath.Ext(r.URL.Path)[1:]
+		// w.Header().Set("Content-Type", "image/"+ext)
+		// io.Copy(w, f)
 	})
 
 	// static image server
