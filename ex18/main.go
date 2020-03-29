@@ -53,7 +53,7 @@ func main() {
 	})
 
 	mux.HandleFunc("/modify/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("modify")
+		log.Println("handle modify")
 		f, err := os.Open("./img/" + filepath.Base(r.URL.Path))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -62,6 +62,9 @@ func main() {
 		defer f.Close()
 		ext := filepath.Ext(f.Name())[1:]
 		modeStr := r.FormValue("mode")
+		numStr := r.FormValue("n")
+
+		// render num mode choices
 		if modeStr == "" {
 			renderModeChoices(w, r, f, ext)
 			return
@@ -71,13 +74,18 @@ func main() {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		_ = f
-		_ = mode
-		// render num shapes choices
 
-		// ext := filepath.Ext(r.URL.Path)[1:]
-		// w.Header().Set("Content-Type", "image/"+ext)
-		// io.Copy(w, f)
+		// render num shapes choices
+		if numStr == "" {
+			renderNumShapeChoices(w, r, f, ext, primitive.Mode(mode))
+			return
+		}
+		_, err = strconv.Atoi(numStr)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		http.Redirect(w, r, "/img/"+filepath.Base(f.Name()), http.StatusFound)
 	})
 
 	// static image server
@@ -91,25 +99,13 @@ func main() {
 
 func renderModeChoices(w http.ResponseWriter, r *http.Request, rs io.ReadSeeker, ext string) {
 	log.Println("renderModeChoices")
-	a, err := genImage(rs, ext, 50, primitive.ModeCircle)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	opts := []genOpts{
+		{N: 50, M: primitive.ModeCircle},
+		{N: 50, M: primitive.ModeTriangle},
+		{N: 50, M: primitive.ModePolygon},
+		{N: 50, M: primitive.ModeCombo},
 	}
-	rs.Seek(0, 0)
-	b, err := genImage(rs, ext, 50, primitive.ModeTriangle)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	rs.Seek(0, 0)
-	c, err := genImage(rs, ext, 50, primitive.ModePolygon)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	rs.Seek(0, 0)
-	d, err := genImage(rs, ext, 50, primitive.ModeCombo)
+	imgs, err := genImages(rs, ext, opts...)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -123,19 +119,80 @@ func renderModeChoices(w http.ResponseWriter, r *http.Request, rs io.ReadSeeker,
 			{{end}}
 		</body><html>`
 	tpl := template.Must(template.New("").Parse(html))
-	data := []struct {
+	type dataStruct struct {
 		Name string
 		Mode primitive.Mode
-	}{
-		{Name: filepath.Base(a), Mode: primitive.ModeCircle},
-		{Name: filepath.Base(b), Mode: primitive.ModeTriangle},
-		{Name: filepath.Base(c), Mode: primitive.ModePolygon},
-		{Name: filepath.Base(d), Mode: primitive.ModeCombo},
+	}
+	var data []dataStruct
+	for i, img := range imgs {
+		data = append(data, dataStruct{
+			Name: filepath.Base(img),
+			Mode: opts[i].M,
+		})
 	}
 	err = tpl.Execute(w, data)
 	if err != nil {
 		panic(err)
 	}
+}
+
+func renderNumShapeChoices(w http.ResponseWriter, r *http.Request, rs io.ReadSeeker, ext string, mode primitive.Mode) {
+	log.Println("renderNumShapeChoices")
+	opts := []genOpts{
+		{N: 30, M: mode},
+		{N: 40, M: mode},
+		{N: 50, M: mode},
+		{N: 60, M: mode},
+	}
+	imgs, err := genImages(rs, ext, opts...)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	html := `<html><body>
+			{{range .}}
+				<a href="/modify/{{.Name}}?mode={{.Mode}}&n={{.NumShapes}}">
+					<img style="width: 24%;" src="/img/{{.Name}}" />
+				</a>
+			{{end}}
+		</body><html>`
+	tpl := template.Must(template.New("").Parse(html))
+	type dataStruct struct {
+		Name      string
+		Mode      primitive.Mode
+		NumShapes int
+	}
+	var data []dataStruct
+	for i, img := range imgs {
+		data = append(data, dataStruct{
+			Name:      filepath.Base(img),
+			Mode:      opts[i].M,
+			NumShapes: opts[i].N,
+		})
+	}
+	err = tpl.Execute(w, data)
+	if err != nil {
+		panic(err)
+	}
+}
+
+type genOpts struct {
+	N int
+	M primitive.Mode
+}
+
+func genImages(rs io.ReadSeeker, ext string, opts ...genOpts) ([]string, error) {
+	var ret []string
+	for _, opt := range opts {
+		rs.Seek(0, 0)
+		img, err := genImage(rs, ext, opt.N, opt.M)
+		if err != nil {
+			return ret, err
+		}
+		ret = append(ret, img)
+	}
+	return ret, nil
 }
 
 func genImage(r io.Reader, ext string, numShapes int, mode primitive.Mode) (string, error) {
