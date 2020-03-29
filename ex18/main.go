@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -29,6 +30,7 @@ func main() {
 
 	// handle image upload
 	mux.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("upload")
 		file, header, err := r.FormFile("image")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -51,14 +53,17 @@ func main() {
 	})
 
 	mux.HandleFunc("/modify/", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("modify")
 		f, err := os.Open("./img/" + filepath.Base(r.URL.Path))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		defer f.Close()
+		ext := filepath.Ext(f.Name())[1:]
 		modeStr := r.FormValue("mode")
 		if modeStr == "" {
-			// render mode choices
+			renderModeChoices(w, r, f, ext)
 			return
 		}
 		mode, err := strconv.Atoi(modeStr)
@@ -82,6 +87,55 @@ func main() {
 	port := "3000"
 	log.Printf("Listening at http://127.0.0.1:%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))
+}
+
+func renderModeChoices(w http.ResponseWriter, r *http.Request, rs io.ReadSeeker, ext string) {
+	log.Println("renderModeChoices")
+	a, err := genImage(rs, ext, 50, primitive.ModeCircle)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	rs.Seek(0, 0)
+	b, err := genImage(rs, ext, 50, primitive.ModeTriangle)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	rs.Seek(0, 0)
+	c, err := genImage(rs, ext, 50, primitive.ModePolygon)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	rs.Seek(0, 0)
+	d, err := genImage(rs, ext, 50, primitive.ModeCombo)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	html := `<html><body>
+			{{range .}}
+				<a href="/modify/{{.Name}}?mode={{.Mode}}">
+					<img style="width: 24%;" src="/img/{{.Name}}" />
+				</a>
+			{{end}}
+		</body><html>`
+	tpl := template.Must(template.New("").Parse(html))
+	data := []struct {
+		Name string
+		Mode primitive.Mode
+	}{
+		{Name: filepath.Base(a), Mode: primitive.ModeCircle},
+		{Name: filepath.Base(b), Mode: primitive.ModeTriangle},
+		{Name: filepath.Base(c), Mode: primitive.ModePolygon},
+		{Name: filepath.Base(d), Mode: primitive.ModeCombo},
+	}
+	err = tpl.Execute(w, data)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func genImage(r io.Reader, ext string, numShapes int, mode primitive.Mode) (string, error) {
