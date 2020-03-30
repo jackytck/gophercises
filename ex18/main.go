@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"html/template"
@@ -99,6 +100,9 @@ func main() {
 
 func renderModeChoices(w http.ResponseWriter, r *http.Request, rs io.ReadSeeker, ext string) {
 	log.Println("renderModeChoices")
+	defer func() {
+		log.Println("done renderModeChoces")
+	}()
 	opts := []genOpts{
 		{N: 50, M: primitive.ModeCircle},
 		{N: 50, M: primitive.ModeTriangle},
@@ -138,6 +142,9 @@ func renderModeChoices(w http.ResponseWriter, r *http.Request, rs io.ReadSeeker,
 
 func renderNumShapeChoices(w http.ResponseWriter, r *http.Request, rs io.ReadSeeker, ext string, mode primitive.Mode) {
 	log.Println("renderNumShapeChoices")
+	defer func() {
+		log.Println("done renderNumShapeChoices")
+	}()
 	opts := []genOpts{
 		{N: 30, M: mode},
 		{N: 40, M: mode},
@@ -183,19 +190,49 @@ type genOpts struct {
 }
 
 func genImages(rs io.ReadSeeker, ext string, opts ...genOpts) ([]string, error) {
-	var ret []string
-	for _, opt := range opts {
+	ret := make([]string, len(opts))
+	imgBytes, err := copyBytes(rs, len(opts))
+	if err != nil {
+		return ret, err
+	}
+	type res struct {
+		Rank  int
+		Name  string
+		Error error
+	}
+	ch := make(chan res)
+	for i, opt := range opts {
+		go func(i int, opt genOpts) {
+			img, err := genImage(imgBytes[i], ext, opt.N, opt.M)
+			ch <- res{i, img, err}
+		}(i, opt)
+	}
+	for i := 0; i < len(opts); i++ {
+		r := <-ch
+		if r.Error != nil {
+			return ret, r.Error
+		}
+		ret[r.Rank] = r.Name
+	}
+	return ret, nil
+}
+
+func copyBytes(rs io.ReadSeeker, n int) ([]*bytes.Buffer, error) {
+	var ret []*bytes.Buffer
+	for i := 0; i < n; i++ {
 		rs.Seek(0, 0)
-		img, err := genImage(rs, ext, opt.N, opt.M)
+		b := bytes.NewBuffer(nil)
+		_, err := io.Copy(b, rs)
 		if err != nil {
 			return ret, err
 		}
-		ret = append(ret, img)
+		ret = append(ret, b)
 	}
 	return ret, nil
 }
 
 func genImage(r io.Reader, ext string, numShapes int, mode primitive.Mode) (string, error) {
+	log.Println("genImage", "numShapes", numShapes, "mode", mode)
 	out, err := primitive.Transform(r, ext, numShapes, primitive.WithMode(mode))
 	if err != nil {
 		return "", err
