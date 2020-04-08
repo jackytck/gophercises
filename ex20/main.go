@@ -11,6 +11,12 @@ const (
 	xIndent  = 40.0
 )
 
+type LineItem struct {
+	UnitName       string
+	PricePerUnit   int
+	UnitsPurchased int
+}
+
 func main() {
 	pdf := gofpdf.New(gofpdf.OrientationPortrait, gofpdf.UnitPoint, gofpdf.PageSizeLetter, "")
 	w, h := pdf.GetPageSize()
@@ -82,10 +88,48 @@ func main() {
 
 	// Grid
 	// drawGrid(pdf)
-	err := pdf.OutputFileAndClose("p3.pdf")
+	err := pdf.OutputFileAndClose("p4.pdf")
 	if err != nil {
 		panic(err)
 	}
+}
+
+func lineItem(pdf *gofpdf.Fpdf, x, y float64, lineItem LineItem) (float64, float64) {
+	origX := x
+	w, _ := pdf.GetPageSize()
+	pdf.SetFont("times", "", 14)
+	_, lineHt := pdf.GetFontSize()
+	pdf.SetTextColor(50, 50, 50)
+	pdf.MoveTo(x, y)
+	x, y = xIndent-2.0, y+lineHt*.75
+	pdf.MoveTo(x, y)
+	pdf.MultiCell(w/2.65+1.5, lineHt, lineItem.UnitName, gofpdf.BorderNone, gofpdf.AlignLeft, false)
+	tmp := pdf.SplitLines([]byte(lineItem.UnitName), w/2.65+1.5)
+	maxY := y + float64(len(tmp)-1)*lineHt
+	x = x + w/2.65 + 1.5
+	pdf.MoveTo(x, y)
+	pdf.CellFormat(100.0, lineHt, toUSD(lineItem.PricePerUnit), gofpdf.BorderNone, gofpdf.LineBreakNone, gofpdf.AlignRight, false, 0, "")
+	x = x + 100.0
+	pdf.MoveTo(x, y)
+	pdf.CellFormat(80.0, lineHt, fmt.Sprintf("%d", lineItem.UnitsPurchased), gofpdf.BorderNone, gofpdf.LineBreakNone, gofpdf.AlignRight, false, 0, "")
+	x = w - xIndent - 2.0 - 119.5
+	pdf.MoveTo(x, y)
+	pdf.CellFormat(119.5, lineHt, toUSD(lineItem.PricePerUnit*lineItem.UnitsPurchased), gofpdf.BorderNone, gofpdf.LineBreakNone, gofpdf.AlignRight, false, 0, "")
+	if maxY > y {
+		y = maxY
+	}
+	y = y + lineHt*1.75
+	pdf.SetDrawColor(180, 180, 180)
+	pdf.Line(xIndent-10.0, y, w-xIndent+10.0, y)
+	return origX, y
+}
+
+func toUSD(cents int) string {
+	centsStr := fmt.Sprintf("%d", cents%100)
+	if len(centsStr) < 2 {
+		centsStr = "0" + centsStr
+	}
+	return fmt.Sprintf("$%d.%s", cents/100, centsStr)
 }
 
 func summaryBlock(pdf *gofpdf.Fpdf, x, y float64, title string, data ...string) (float64, float64) {
